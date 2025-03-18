@@ -16,6 +16,15 @@ contract BinaryOptions is ReentrancyGuard(), Ownable(msg.sender) {
         bool outcome; // true for Yes, false for No
     }
 
+    struct OptionView {
+        uint256 strikePrice;
+        uint256 expirationTime;
+        uint256 totalYes;
+        uint256 totalNo;
+        bool resolved;
+        bool outcome; // true for Yes, false for No
+    }
+
     Option[] public options;
 
     uint256 public housePercentage; // Percentage of the reward that goes to the house
@@ -139,10 +148,40 @@ contract BinaryOptions is ReentrancyGuard(), Ownable(msg.sender) {
         return (userShare, houseShare);
     }
 
-
-    function findOptions(uint256 optionId) external view returns (uint256 strikePrice, uint256 expirationTime, uint256 totalYes, uint256 totalNo, bool resolved, bool outcome, uint256 id) {
+    function findOptionById(uint256 optionId) external view returns (uint256 strikePrice, uint256 expirationTime, uint256 totalYes, uint256 totalNo, bool resolved, bool outcome, uint256 id) {
         require(optionId < options.length, "Option does not exist");
         Option storage option = options[optionId];
         return (option.strikePrice, option.expirationTime, option.totalYes, option.totalNo, option.resolved, option.outcome, optionId);
+    }
+
+    function getAllOptions() external view returns (OptionView[] memory) {
+        OptionView[] memory allOptions = new OptionView[](options.length);
+        for (uint256 i = 0; i < options.length; i++) {
+            Option storage option = options[i];
+            allOptions[i] = OptionView({
+                strikePrice: option.strikePrice,
+                expirationTime: option.expirationTime,
+                totalYes: option.totalYes,
+                totalNo: option.totalNo,
+                resolved: option.resolved,
+                outcome: option.outcome
+            });
+        }
+        return allOptions;
+    }
+
+    function getLatestOption() external view returns (OptionView memory, uint256) {
+        require(options.length > 0, "No options available");
+        uint256 latestOptionId = options.length - 1;
+        Option storage latestOption = options[latestOptionId];
+        OptionView memory optionView = OptionView({
+            strikePrice: latestOption.strikePrice,
+            expirationTime: latestOption.expirationTime,
+            totalYes: latestOption.totalYes,
+            totalNo: latestOption.totalNo,
+            resolved: latestOption.resolved,
+            outcome: latestOption.outcome
+        });
+        return (optionView, latestOptionId);
     }
 }
